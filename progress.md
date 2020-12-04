@@ -42,3 +42,4 @@ Realized at this point that more complex linguistic analysis would be language-s
 
 ## Version 1 - Reduced Dataset (English)
 - Out of memory error with CountVectorizer. Switched to HashingVectorizer insted
+- Optimal parameters took too long; changed Bootstrap to True and MaxDepth to 10
