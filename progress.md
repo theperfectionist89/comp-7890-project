@@ -1,3 +1,19 @@
+# Datasets
+## Full Dataset
+- Full dataset is an aggregation of 7 Tweet databases from 2012-2014
+- ~15 million Tweets from ~5 million users
+
+## Reduced Dataset
+- For ease of analysis, Tweets were dropped if the author had fewer than 50 Tweets in the database
+- ~2 million Tweets from ~18,000 users (averaging 105 Tweets/id)
+
+
+## Tiny Dataset
+- A sampling of the Reduced Dataset for preliminary testing
+- 17,712 Tweets from 100 different userids (averaging 177 tweets/id)
+
+
+# Progress Tracker
 ## Early Versions - Testing with Tiny dataset
 1. Tested MutlinomialNB. Even with parameter optimization, achieved a score of ~30%
 1. Tried experimental HistGradientBoostingClassifier. Crashed. I think the kind of data I have is wrong for it.
