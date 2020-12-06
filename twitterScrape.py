@@ -19,7 +19,8 @@ import numpy as np
 from tqdm import tqdm
 tqdm.pandas()
 
-path = "C:\\Users\\User\\Desktop\\Large Datasets\\twitter-events-2012-2016\\Full Datasets"
+#path = "C:\\Users\\User\\Desktop\\Large Datasets\\twitter-events-2012-2016\\Full Datasets"
+path = "T:\\COMP7890\\Full Datasets"
 outPath = os.path.join(path,"Trimmed")
 mainFile = "TweetDatabase.csv"
 cleanFile = "TweetDatabaseClean.csv"
@@ -27,6 +28,7 @@ multiFile = "TweetDatabaseMulti.csv"
 dupsFile = "TweetDatabaseDuplicates.csv"
 
 tinyFile = "TweetTiny.csv"
+tinyFile2 = "TweetTiny2.csv"
 
 #created_at, lang may also be useful
 keepList = ["text","id","user_screen_name","user_name"]
@@ -86,8 +88,9 @@ def processBigData():
         if file[-3:] == "csv":
             print("Reading {}".format(file))
             df = readHuge(file)
-            droplist = [ii for ii in df.columns if ii not in keepList]
-            df = df.drop(droplist,axis=1).set_index("id")
+            df = df.loc[df["lang"]=="en",keepList]
+            #droplist = [ii for ii in df.columns if ii not in keepList]
+            df = df.set_index("id")
             
             df.to_csv(outPath+"\\"+file)
             print("\nDone {}".format(file))
@@ -111,7 +114,7 @@ def mergeSmallData():
     
 def trimUnique(file):
     filepath = os.path.join(path,outPath,file)
-    df = readHuge(filepath).set_index("id").drop("text",axis=1).dropna()
+    df = readHuge(filepath).set_index("id").dropna()
     df.columns = df.columns.str.strip()
     
     hashtag = df["display_name"].str.startswith("#")
@@ -147,7 +150,7 @@ def makeTiny(file,ids=100,rows=10000):
         result = df[df["userid"].isin(idx)]
         
     result = result.sort_values(by=["display_name","userid"])
-    result.to_csv(os.path.join(path,outPath,tinyFile))
+    result.to_csv(os.path.join(path,outPath,tinyFile2))
     
 def stripLinks(txt):
     #Remove mentions and links
@@ -166,10 +169,10 @@ def process(file):
     print("Editing...")
     df["display_name"] = df["display_name"].progress_apply(lambda x: str(x).strip())
     df["userid"] = df["userid"].progress_apply(lambda x: str(x).strip())
-    df["clean_text"] = df["txt"].progress_apply(stripLinks)
+    df["clean_text"] = df["text"].progress_apply(stripLinks)
     
     outpath = os.path.join(path,outPath,cleanFile)
-    df.to_csv(outpath)
+    df.drop("text",axis=1).to_csv(outpath)
     
     
 def main():
@@ -177,7 +180,7 @@ def main():
     #mergeSmallData()
     #process(mainFile)
     #trimUnique(cleanFile)
-    makeTiny(multiFile)
+    makeTiny(multiFile,250,20000)
     
 if __name__ == "__main__":
     main()
