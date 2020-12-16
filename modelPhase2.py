@@ -6,20 +6,16 @@ Created on Wed Nov 25 11:01:57 2020
 """
 from twitterScrape import readHuge
 
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, HashingVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.feature_selection import chi2, GenericUnivariateSelect
 from sklearn.pipeline import Pipeline
 from sklearn.utils import shuffle
 from sklearn.model_selection import cross_val_score
 
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 
 import os
-from pprint import pprint
 import nltk
 from nltk.corpus import wordnet as wn
 from collections import defaultdict
@@ -35,7 +31,37 @@ tagMap['J'] = wn.ADJ
 tagMap['V'] = wn.VERB
 tagMap['R'] = wn.ADV
 
-def main(file,one,two,three,models,output=None):    
+dtParams = {'clf__ccp_alpha': 0.0,
+    	'clf__class_weight': 'balanced',
+    	'clf__criterion': 'gini',
+    	'clf__max_depth': None,
+    	'clf__max_features': None,
+    	'clf__min_impurity_decrease': 0.0,
+    	'clf__min_samples_leaf': 1,
+    	'clf__min_samples_split': 8,
+    	'clf__min_weight_fraction_leaf': 0.0,
+    	'clf__splitter': 'best',
+    	'tfidf__norm': 'l1',
+    	'tfidf__use_idf': False,
+    	'vect__max_df': 1.0,
+    	'vect__max_features': None,
+    	'vect__ngram_range': (1, 1)}
+svParams = {'clf__C': 1.0,
+	'clf__class_weight': None,
+	'clf__dual': True,
+	'clf__loss': 'squared_hinge',
+	'clf__max_iter': 2500,
+	'clf__multi_class': 'ovr',
+	'clf__penalty': 'l2',
+	'clf__tol': 0.0001,
+	'clf__verbose': 2,
+	'tfidf__norm': 'l2',
+	'tfidf__use_idf': False,
+	'vect__max_df': 1.0,
+	'vect__max_features': None,
+	'vect__ngram_range': (1, 2)}
+
+def main(file,one,two,three,params,models,output=None):    
     times = []
     pipe = Pipeline([
         ("vect",one),
@@ -44,26 +70,13 @@ def main(file,one,two,three,models,output=None):
         ],
         verbose=True)
     
-    params = {
-        #'clf__bootstrap': False,
-        #'clf__max_depth': None,
-        #'clf__max_features': 'sqrt',
-    	#'clf__max_samples': 0.5,
-    	#'clf__min_samples_leaf': 1,
-    	#j'clf__min_samples_split': 3,
-    	#'clf__n_estimators': 500,
-    	#'clf__warm_start': False,
-    	'tfidf__use_idf': False,
-    	'vect__max_df': 0.75,
-        'vect__ngram_range': (1, 1)
-    }
     pipe.set_params(**params)
     
     if 1 in models:
-        versionOne(df,pipe,output)
+        versionOne(file,pipe,output)
         times.append(time.time())
     if 2 in models:
-        versionTwo(df,pipe,output)
+        versionTwo(file,pipe,output)
         times.append(time.time())
     return times
     
@@ -145,23 +158,6 @@ def versionTwo(df,pp,oo):
     xx = featureWeight(ct,xx,yy)
     pp.steps.pop(0) #We already did this one
     runModel(xx,yy,pp,oo)
-    '''
-    No Feature Selection - Tiny
-    CV [0.48465516 0.47083181 0.48422406 0.48730956 0.48257483]
-    Avg 0.48191908528454536
-    
-    After Feature Selection - Tiny
-    CV [0.47652993 0.48855923 0.48393948 0.48343486 0.48540567]
-    Avg 0.4835738342612304
-    
-    After Feature Selection Tiny Pt. 2 - Max Depth 75
-    [0.23399367 0.23391813 0.23235523 0.23197075 0.23225816]
-    0.23289918852928548
-    
-    [0.33685847 0.33652573 0.33480521 0.33559836 0.32796942]
-    0.3343514392456411
-    '''
-    
     
 def runModel(xx,yy,pp,oo):
     xx, yy = shuffle(xx, yy)
@@ -182,28 +178,31 @@ def checkPrint(txt,file=None):
     else:
         file.write("{}\n".format(txt))
     
-vv = CountVectorizer(strip_accents="unicode")
-#vv = HashingVectorizer()
-tt = TfidfTransformer()
-nb = MultinomialNB()
-rf = RandomForestClassifier(verbose=3,n_jobs=1)
-dt = DecisionTreeClassifier()
-lr = LogisticRegression(solver='saga')
-sv = LinearSVC()
-
-df = baseDF("TweetTiny.csv")
-
 #("Random Forest",rf),("Logistic Regression",lr),
+    
+def setup():
+    vv = CountVectorizer(strip_accents="unicode")
+    #vv = HashingVectorizer()
+    tt = TfidfTransformer()
+    dt = DecisionTreeClassifier()
+    sv = LinearSVC()
+    
+    models = [("Decision Tree",dt,dtParams),("SVM",sv,svParams)]
 
-with open("results.txt","w") as output:
-    for name, clf in [("Naive Bayes",nb),("Decision Tree",dt),("Random Forest",rf),("Logistic Regression",lr),("SVM",sv)]:
-        output.write("{}\n".format(name))
-        start = time.time()
-        times = main(df,vv,tt,clf,[1,2],output)    
-        end = time.time()
-        times.insert(0,start)
-        times.append(end)
-        for ii in range(1,len(times)-1):
-            output.write("Time Elapsed (Model {}): {}\n".format(
-                ii,times[ii]-times[ii-1]))
-        output.write("-"*50+"\n\n")
+    df = baseDF("TweetTiny2.csv")
+    
+    with open("results.txt","w") as output:
+        for name, clf, params in models:
+            output.write("{}\n".format(name))
+            start = time.time()
+            times = main(df,vv,tt,clf,params,[1],output)    
+            end = time.time()
+            times.insert(0,start)
+            times.append(end)
+            for ii in range(1,len(times)-1):
+                output.write("Time Elapsed (Model {}): {}\n".format(
+                    ii,times[ii]-times[ii-1]))
+            output.write("-"*50+"\n\n")
+            
+if __name__ == "__main__":
+    setup()

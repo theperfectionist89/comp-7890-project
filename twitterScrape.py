@@ -28,7 +28,6 @@ multiFile = "TweetDatabaseMulti.csv"
 dupsFile = "TweetDatabaseDuplicates.csv"
 
 tinyFile = "TweetTiny.csv"
-tinyFile2 = "TweetTiny2.csv"
 
 #created_at, lang may also be useful
 keepList = ["text","id","user_screen_name","user_name"]
@@ -140,7 +139,7 @@ def trimUnique(file):
     outpath2 = os.path.join(path,outPath,dupsFile)
     keep.to_csv(outpath2)
     
-def makeTiny(file,ids=100,rows=10000):
+def makeTiny(file,ids=100,rows=10000,suffix=""):
     filepath = os.path.join(path,outPath,file)
     df = readHuge(filepath)
     idx = df["userid"].sample(ids)
@@ -150,7 +149,8 @@ def makeTiny(file,ids=100,rows=10000):
         result = df[df["userid"].isin(idx)]
         
     result = result.sort_values(by=["display_name","userid"])
-    result.to_csv(os.path.join(path,outPath,tinyFile2))
+    filename = tinyFile.replace(".csv","{}.csv".format(suffix))
+    result.to_csv(os.path.join(path,outPath,filename))
     
 def stripLinks(txt):
     #Remove mentions and links
@@ -180,7 +180,7 @@ def main():
     #mergeSmallData()
     #process(mainFile)
     #trimUnique(cleanFile)
-    makeTiny(multiFile,250,20000)
+    makeTiny(multiFile,500,50000,3)
     
 if __name__ == "__main__":
     main()
