@@ -99,6 +99,15 @@ def makeSmallFiles(sizes,numUsers,sampleSize=None):
         outname = ff.replace(".csv","small.csv")
         sample.to_csv(outname)
     
+def smallFileReport(sizes):
+    os.chdir(outPath)
+    filenames = ["{}{}small.csv".format(userBase,ii) for ii in sizes]
+    for ff in filenames:
+        df = readHuge(ff)#.drop(dropcols,axis=1).set_index("id")
+        print(ff)
+        print(df.shape)
+        print(df.groupby("userid")["clean_text"].count())
+
 
 def runModel(file,one,two,three,params,output=None):    
     pipe = Pipeline([
@@ -119,7 +128,15 @@ def main(sizes):
     dt = DecisionTreeClassifier()
     sv = LinearSVC()
     
-    models = [("Decision Tree",dt,dtParams),("SVM",sv,svParams)]
+    params = {
+        'tfidf__norm': 'l1',
+    	'tfidf__use_idf': False,
+    	'vect__max_df': 1.0,
+    	'vect__max_features': None,
+    	'vect__ngram_range': (1, 1)
+        }
+    
+    models = [("Decision Tree",dt),("SVM",sv)]
     
     filenames = ["{}{}small.csv".format(userBase,ii) for ii in sizes]
     filenames.extend(["TweetTiny.csv","TweetTiny2.csv","TweetTiny3.csv"])
@@ -128,7 +145,7 @@ def main(sizes):
         df = baseDF(file)
     
         with open("./Results/resultUser-{}.txt".format(file.replace(".csv","")),"w") as output:
-            for name, clf, params in models:
+            for name, clf in models:
                 output.write("{}\n".format(name))
                 output.write("{}\n".format(df.shape))
                 start = time.time()
@@ -150,5 +167,6 @@ if __name__ == "__main__":
     #buildUserFiles("TweetDatabaseMulti.csv",0.25)
     #selectUsernames([25,50,75,100,125], 5000)
     #makeSmallFiles([25,50,75,100,125], 5000, 500)
+    #smallFileReport([25,50,75,100,125])
     main([25,50,75,100,125])
     #chk()

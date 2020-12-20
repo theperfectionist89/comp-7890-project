@@ -165,11 +165,15 @@ def runModel(xx,yy,pp,oo):
     checkPrint(scores,oo)
     checkPrint(scores.mean(),oo)
     
-def baseDF(file):
+def baseDF(file,out=None):
     filepath = os.path.join(path,file)
-    df = readHuge(filepath).set_index("id")#.drop(dropcols,axis=1)
-    checkPrint(df.shape)
-    checkPrint(df.groupby("userid")["clean_text"].count())
+    df = readHuge(filepath).set_index("id")
+    try:
+        df = df.drop(dropcols,axis=1)
+    except:
+        pass
+    checkPrint(df.shape,out)
+    checkPrint(df.groupby("userid")["clean_text"].count(),out)
     return df
     
 def checkPrint(txt,file=None):
@@ -188,21 +192,21 @@ def setup():
     sv = LinearSVC()
     
     models = [("Decision Tree",dt,dtParams),("SVM",sv,svParams)]
-
-    df = baseDF("TweetTiny2.csv")
     
     with open("results.txt","w") as output:
-        for name, clf, params in models:
-            output.write("{}\n".format(name))
-            start = time.time()
-            times = main(df,vv,tt,clf,params,[1],output)    
-            end = time.time()
-            times.insert(0,start)
-            times.append(end)
-            for ii in range(1,len(times)-1):
-                output.write("Time Elapsed (Model {}): {}\n".format(
-                    ii,times[ii]-times[ii-1]))
-            output.write("-"*50+"\n\n")
+        for suffix in ["","2","3"]:
+            df = baseDF("TweetTiny{}.csv".format(suffix))
+            for name, clf, params in models:
+                output.write("{}\n".format(name))
+                start = time.time()
+                times = main(df,vv,tt,clf,params,[1],output)    
+                end = time.time()
+                times.insert(0,start)
+                times.append(end)
+                for ii in range(1,len(times)-1):
+                    output.write("Time Elapsed (Model {}): {}\n".format(
+                        ii,times[ii]-times[ii-1]))
+                output.write("-"*50+"\n\n")
             
 if __name__ == "__main__":
     setup()
